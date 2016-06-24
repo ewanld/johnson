@@ -11,15 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.omg.CORBA.Request;
+import java.util.Set;
 
 import com.github.johnson.JohnsonParser;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.ObjectType;
 import com.github.johnson.util.Maybe;
-
-import java.util.Set;
 
 public class CodeGenerator {
 	private final String packageName;
