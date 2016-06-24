@@ -1,0 +1,59 @@
+<project name="johnson" default="jar">
+	<property name="buildDir" value="build" />
+	<property name="johnsonJar" value="johnson.jar" />
+	<property name="johnsonCodegenJar" value="johnson-codegen.jar" />
+	<property name="libDir" value="./lib" />
+
+	<path id="master-classpath">
+		<pathelement path="${classpath}" />
+		<fileset dir="${libDir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<delete dir="${buildDir}" />
+	</target>
+
+	<target name="compile" depends="clean">
+		<mkdir dir="${buildDir}/classes" />
+		<javac srcdir="src" destdir="${buildDir}/classes">
+			<classpath refid="master-classpath" />
+		</javac>
+	</target>
+	
+	<target name="compile-codegen" depends="clean">
+		<mkdir dir="${buildDir}/classes-codegen" />
+		<javac destdir="${buildDir}/classes-codegen">
+			<src path="src" />
+			<src path="src-codegen" />
+			<classpath refid="master-classpath" />
+		</javac>
+	</target>
+
+	<target name="jar" depends="jar-johnson,jar-johnson-codegen" />
+	
+	<target name="jar-johnson" depends="compile">
+		<mkdir dir="${buildDir}" />
+		<jar destfile="${buildDir}/${johnsonJar}" basedir="${buildDir}/classes">
+			<manifest>
+				<attribute name="Main-Class" value="com.github.richie.Cli" />
+			</manifest>
+		</jar>
+	</target>
+
+
+	<target name="jar-johnson-codegen" depends="compile,compile-codegen">
+		<mkdir dir="${buildDir}" />
+		<jar destfile="${buildDir}/${johnsonCodegenJar}" basedir="${buildDir}/classes-codegen">
+			<manifest>
+				<attribute name="Main-Class" value="com.github.richie.Cli" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run">
+		<java jar="${buildDir}/${jarName}" fork="true" />
+	</target>
+
+</project>
