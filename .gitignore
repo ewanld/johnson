@@ -1,2 +1,4 @@
 /johnson-runtime/target/
 /johnson-runtime/bin/
+/johnson-codegen/target/
+/johnson-codegen/bin/
