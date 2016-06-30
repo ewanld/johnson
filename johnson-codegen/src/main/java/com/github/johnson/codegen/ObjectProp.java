@@ -3,6 +3,9 @@ package com.github.johnson.codegen;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.util.Maybe;
 
+/**
+ * Represent a property of a JSON Object. A property has a name, a type, and a 'required' flag.
+ */
 public class ObjectProp {
 	public final boolean required;
 	public final JohnsonType type;
