@@ -22,6 +22,9 @@ import com.github.johnson.codegen.types.RawType;
 import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.codegen.types.StringType;
 
+/**
+ * Read a specification file (JSON) and create the associated JohnsonType's.
+ */
 public class SpecParser implements Closeable {
 	private static final Pattern specDelim = Pattern.compile("\\s+");
 	private static final String KEYWORD_PREFIX = "#";
