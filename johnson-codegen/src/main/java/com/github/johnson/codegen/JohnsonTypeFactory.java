@@ -11,8 +11,11 @@ import com.github.johnson.codegen.types.RawType;
 import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.codegen.types.StringType;
 
-public class ObjectTypeFactory {
-	private ObjectTypeFactory() {
+/**
+ * Factory for instances of JohnsonType and its subtypes.
+ */
+public class JohnsonTypeFactory {
+	private JohnsonTypeFactory() {
 		// prevent instanciation
 	}
 
