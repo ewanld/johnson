@@ -11,6 +11,9 @@ import com.github.johnson.codegen.types.RawType;
 import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.codegen.types.StringType;
 
+/**
+ * Hierarchical visitor of a JohnsonType object.
+ */
 public abstract class TypeVisitor {
 	public void visitBool(BooleanType type) {
 	}
@@ -31,8 +34,7 @@ public abstract class TypeVisitor {
 	}
 
 	/**
-	 * Implementors must return true if the children must be visited, false
-	 * otherwise.
+	 * Implementors must return true if the children must be visited, false otherwise.
 	 */
 	public boolean enterObject(ObjectType type) {
 		return true;
@@ -42,8 +44,7 @@ public abstract class TypeVisitor {
 	}
 
 	/**
-	 * Implementors must return true if the child type must be visited, false
-	 * otherwise.
+	 * Implementors must return true if the child type must be visited, false otherwise.
 	 */
 	public boolean enterMap(MapType type) {
 		return true;
@@ -53,8 +54,7 @@ public abstract class TypeVisitor {
 	}
 
 	/**
-	 * Implementors must return true if the child type must be visited, false
-	 * otherwise.
+	 * Implementors must return true if the child type must be visited, false otherwise.
 	 */
 	public boolean enterArray(ArrayType type) {
 		return true;

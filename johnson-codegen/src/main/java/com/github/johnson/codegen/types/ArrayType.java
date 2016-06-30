@@ -42,8 +42,7 @@ public class ArrayType extends JohnsonType {
 	@Override
 	public String getParserTypeName() {
 		final String parserClassName = ArrayParser.class.getSimpleName();
-		return String.format("%s<%s, %s>", parserClassName, childType.getClassName(),
-				childType.getParserTypeName());
+		return String.format("%s<%s, %s>", parserClassName, childType.getClassName(), childType.getParserTypeName());
 	}
 
 	public JohnsonType getChildType() {

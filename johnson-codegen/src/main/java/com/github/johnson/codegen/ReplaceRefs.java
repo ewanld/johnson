@@ -17,7 +17,7 @@ public class ReplaceRefs extends TypeVisitor {
 			acceptAny(type);
 		}
 	}
-	
+
 	@Override
 	public void visitRef(RefType ref) {
 		final JohnsonType refType = types.get(ref.getRefTypeName());
