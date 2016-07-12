@@ -7,13 +7,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Represent either a value, or the absence of a value.
+ * Represent either a (nullable) value, or the absence of a value.
  * <p>
  * <ul>
  * <li>To create an instance representing a value, use the static method {@code of(T value)}.
  * <li>To create an instance representing the absence of value, use the static method {@code empty()}.
  * </ul>
- * The Difference with {@link java.util.Optional} is that the value may be {@code null}.
+ * The difference with {@link java.util.Optional} is that the value may be {@code null}.
  * 
  * @param <T>
  *            The type of the value.
