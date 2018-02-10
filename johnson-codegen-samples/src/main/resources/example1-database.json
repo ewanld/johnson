@@ -1,0 +1,18 @@
+{
+	"database": {
+		"name": "string",
+		"tables": [ "table" ]
+	},
+	"table": {
+		"name": "string",
+		"type": "string",
+		"columns": [ "column" ]
+	},
+	"column": {
+		"name": "string",
+		"typeCode": "int",
+		"typeName": "string",
+		"nullable": "bool",
+		"size": "int"
+	}
+}

@@ -1,0 +1,70 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.github.johnson</groupId>
+	<artifactId>johnson-codegen-samples</artifactId>
+	<version>0.1.0</version>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.johnson</groupId>
+			<artifactId>johnson-codegen</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.github.johnson</groupId>
+				<artifactId>johnson-codegen-maven-plugin</artifactId>
+				<version>0.1.0-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<id>example1-database</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<schema>${project.basedir}/src/main/resources/example1-database.json</schema>
+							<packageName>com.github.johnson.examples</packageName>
+							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
+							<dtoFieldsFinal>false</dtoFieldsFinal>
+							<generateDtoVisitor>true</generateDtoVisitor>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/java</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
