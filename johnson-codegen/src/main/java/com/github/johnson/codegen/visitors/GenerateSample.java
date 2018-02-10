@@ -83,13 +83,22 @@ public class GenerateSample extends JohnsonTypeVisitor {
 	}
 
 	@Override
+	public void visitInt(IntType type) {
+		quiet(() -> generator.writeNumber(4));
+	}
+
+	@Override
 	public void visitLong(LongType type) {
 		quiet(() -> generator.writeNumber(4));
 	}
 
 	@Override
+	public void visitDouble(DoubleType type) {
+		quiet(() -> generator.writeNumber(3.14));
+	}
+
+	@Override
 	public void visitDecimal(DecimalType type) {
-		BigDecimal.valueOf(314, 3);
 		quiet(() -> generator.writeNumber(BigDecimal.valueOf(314, 2)));
 	}
 

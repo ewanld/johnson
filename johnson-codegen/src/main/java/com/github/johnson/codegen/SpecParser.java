@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -15,6 +16,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.github.johnson.codegen.types.ArrayType;
 import com.github.johnson.codegen.types.BooleanType;
 import com.github.johnson.codegen.types.DecimalType;
+import com.github.johnson.codegen.types.DoubleType;
+import com.github.johnson.codegen.types.IntType;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.LongType;
 import com.github.johnson.codegen.types.ObjectType;
@@ -41,7 +44,7 @@ public class SpecParser implements Closeable {
 	}
 
 	public Map<String, JohnsonType> read() throws JsonParseException, IOException {
-		final Map<String, JohnsonType> res = new HashMap<String, JohnsonType>();
+		final Map<String, JohnsonType> res = new TreeMap<>();
 		jp.nextToken();
 		assert jp.getCurrentToken() == JsonToken.START_OBJECT;
 		while (jp.nextToken() != JsonToken.END_OBJECT) {
@@ -56,7 +59,7 @@ public class SpecParser implements Closeable {
 	}
 
 	private ObjectType readObjectType() throws JsonParseException, IOException {
-		final List<ObjectProp> props = new ArrayList<ObjectProp>();
+		final List<ObjectProp> props = new ArrayList<>();
 		assert jp.getCurrentToken() == JsonToken.START_OBJECT;
 		while (jp.nextToken() != JsonToken.END_OBJECT) {
 			final ObjectProp objectProp = readObjectProp();
@@ -65,20 +68,16 @@ public class SpecParser implements Closeable {
 		return new ObjectType(props);
 	}
 
-	public ObjectProp readObjectProp() throws IOException {
+	private ObjectProp readObjectProp() throws IOException {
 		assert jp.getCurrentToken() == JsonToken.FIELD_NAME;
 		final String name_spec = jp.getCurrentName();
-		final List<String> name_specs = Arrays.asList(specDelim.split(name_spec));
-		final String propName = name_specs.get(0);
-		final List<String> modifiers = name_specs.subList(1, name_specs.size());
-
-		final boolean required = !modifiers.stream().anyMatch(t -> t.equalsIgnoreCase(KEYWORD_PREFIX + "optional"));
+		final boolean required = !name_spec.endsWith("?");
+		final String propName = !required ? name_spec.substring(0, name_spec.length() - 1) : name_spec;
 		final JohnsonType type = readJohnsonType();
 		return new ObjectProp(propName, type, required);
-
 	}
 
-	public JohnsonType readJohnsonType() throws IOException {
+	private JohnsonType readJohnsonType() throws IOException {
 		final JsonToken token = jp.nextToken();
 		if (token == JsonToken.START_ARRAY) {
 			final ArrayType arrayType = new ArrayType(readJohnsonType(), false);
@@ -102,20 +101,25 @@ public class SpecParser implements Closeable {
 	}
 
 	private JohnsonType readTypeSpec(String spec) {
-		final List<String> specs = Arrays.asList(specDelim.split(spec));
-		final String typeName = specs.get(0);
-		final List<String> modifiers = specs.subList(1, specs.size());
-		final boolean nullable = modifiers.stream().anyMatch(t -> t.equalsIgnoreCase(KEYWORD_PREFIX + "nullable"));
+		final boolean nullable = spec.endsWith("?");
+		final String typeName = nullable ? spec.substring(0, spec.length() - 1) : spec;
 
 		if (typeName.equals("bool")) {
 			return new BooleanType(nullable);
 		} else if (typeName.equals("string")) {
 			return new StringType(nullable);
 		} else if (typeName.equals("int")) {
+			return new IntType(nullable);
+		} else if (typeName.equals("long")) {
 			return new LongType(nullable);
 		} else if (typeName.equals("decimal")) {
 			return new DecimalType(nullable);
+		} else if (typeName.equals("double")) {
+			return new DoubleType(nullable);
 		} else if (typeName.equals("raw")) {
+			return new RawType(nullable);
+		} else if (typeName.equals("ignored")) {
+			// TODO
 			return new RawType(nullable);
 		} else {
 			return new RefType(typeName, nullable);

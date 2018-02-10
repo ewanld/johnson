@@ -6,9 +6,13 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import com.github.ewanld.visitor.*;
-import com.github.ewanld.visitor.codegen.JavaClass;
-import com.github.ewanld.visitor.codegen.VisitorGeneratorService;
+import com.github.visitorj.VisitEvent;
+import com.github.visitorj.VisitResult;
+import com.github.visitorj.Visitable;
+import com.github.visitorj.VisitableList;
+import com.github.visitorj.codegen.JavaClass;
+import com.github.visitorj.codegen.VisitorGeneratorService;
+import com.github.visitorj.util.*;
 import com.github.johnson.JohnsonParser;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.ObjectType;
@@ -277,7 +281,7 @@ public class CodeGenerator {
 	}
 
 	private static class DtoWriter extends JavaWriter {
-		private final Set<ObjectType> types;
+		private final SortedSet<ObjectType> types = new TreeSet<>(Comparator.comparing(JohnsonType::getName));
 		private final boolean generateDtoEmptyConstructor;
 		private final boolean generateDtoVisitor;
 		private final boolean dtoFieldsFinal;
@@ -287,7 +291,7 @@ public class CodeGenerator {
 				boolean generateDtoEmptyConstructor, boolean generateDtoVisitor, boolean dtoFieldsFinal,
 				String dtoVisitorName) throws IOException {
 			super(outputDir, packageName, className);
-			this.types = types;
+			this.types.addAll(types);
 			this.generateDtoEmptyConstructor = generateDtoEmptyConstructor;
 			this.generateDtoVisitor = generateDtoVisitor;
 			this.dtoFieldsFinal = dtoFieldsFinal;
@@ -374,17 +378,18 @@ public class CodeGenerator {
 			// visitor "getVisitableChildren" method
 			if (generateDtoVisitor) {
 				writeln("		@Override");
-				writeln("		public final IdentifiedVisitables<%sVisitor> getVisitableChildren() {", dtoVisitorName);
-				writeln("			final IdentifiedVisitables<%sVisitor> res = new IdentifiedVisitables<>();",
+				writeln("		public final VisitableList<%sVisitor> getVisitableChildren() {", dtoVisitorName);
+				writeln("			final VisitableList<%sVisitor> visitableChildren = new VisitableList<>();",
 						dtoVisitorName);
 				for (final ObjectProp p : type.getProperties()) {
 					final ContainsObjectType containsObjectType = new ContainsObjectType();
 					containsObjectType.acceptAny(p.getType());
 					if (containsObjectType.getResult()) {
-						writeln("			res.add(%s, %s);", p.getVisitableExpr(), toJavaLiteral(p.getJavaName()));
+						writeln("			visitableChildren.add(%s, %s);", p.getVisitableExpr(),
+								toJavaLiteral(p.getJavaName()));
 					}
 				}
-				writeln("			return res;");
+				writeln("			return visitableChildren;");
 				writeln("		}");
 				writeln();
 			}
@@ -405,7 +410,7 @@ public class CodeGenerator {
 
 			if (generateDtoVisitor) {
 				writeln("import %s;", Visitable.class.getName());
-				writeln("import %s;", IdentifiedVisitables.class.getName());
+				writeln("import %s;", VisitableList.class.getName());
 				writeln("import %s;", VisitEvent.class.getName());
 				writeln("import %s;", VisitResult.class.getName());
 				writeln("import %s;", Arrays.class.getName());

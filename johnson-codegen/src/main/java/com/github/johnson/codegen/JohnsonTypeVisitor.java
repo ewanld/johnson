@@ -3,6 +3,8 @@ package com.github.johnson.codegen;
 import com.github.johnson.codegen.types.ArrayType;
 import com.github.johnson.codegen.types.BooleanType;
 import com.github.johnson.codegen.types.DecimalType;
+import com.github.johnson.codegen.types.DoubleType;
+import com.github.johnson.codegen.types.IntType;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.LongType;
 import com.github.johnson.codegen.types.MapType;
@@ -19,6 +21,14 @@ public abstract class JohnsonTypeVisitor {
 	}
 
 	public void visitDecimal(DecimalType type) {
+
+	}
+
+	public void visitDouble(DoubleType type) {
+
+	}
+
+	public void visitInt(IntType type) {
 
 	}
 
@@ -90,6 +100,10 @@ public abstract class JohnsonTypeVisitor {
 			((BooleanType) type).accept(this);
 		} else if (type instanceof DecimalType) {
 			((DecimalType) type).accept(this);
+		} else if (type instanceof DoubleType) {
+			((DoubleType) type).accept(this);
+		} else if (type instanceof IntType) {
+			((IntType) type).accept(this);
 		} else if (type instanceof LongType) {
 			((LongType) type).accept(this);
 		} else if (type instanceof StringType) {

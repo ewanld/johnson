@@ -3,6 +3,8 @@ package com.github.johnson.codegen;
 import com.github.johnson.codegen.types.ArrayType;
 import com.github.johnson.codegen.types.BooleanType;
 import com.github.johnson.codegen.types.DecimalType;
+import com.github.johnson.codegen.types.DoubleType;
+import com.github.johnson.codegen.types.IntType;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.LongType;
 import com.github.johnson.codegen.types.MapType;
@@ -27,6 +29,14 @@ public class JohnsonTypeFactory {
 		return new StringType(nullable);
 	}
 
+	public static IntType int_() {
+		return new IntType();
+	}
+
+	public static IntType int_(boolean nullable) {
+		return new IntType(nullable);
+	}
+
 	public static LongType long_() {
 		return new LongType();
 	}
@@ -41,6 +51,14 @@ public class JohnsonTypeFactory {
 
 	public static BooleanType bool(boolean nullable) {
 		return new BooleanType(nullable);
+	}
+
+	public static DoubleType double_() {
+		return new DoubleType();
+	}
+
+	public static DoubleType double_(boolean nullable) {
+		return new DoubleType(nullable);
 	}
 
 	public static DecimalType decimal() {

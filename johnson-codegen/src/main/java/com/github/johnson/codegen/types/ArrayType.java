@@ -1,6 +1,5 @@
 package com.github.johnson.codegen.types;
 
-import com.github.ewanld.visitor.CompositeIterator;
 import com.github.johnson.ArrayParser;
 import com.github.johnson.codegen.JohnsonTypeVisitor;
 
@@ -53,9 +52,9 @@ public class ArrayType extends JohnsonType {
 	public String getIteratorExpr(String variableName) {
 		if (childType instanceof ArrayType) {
 			final ArrayType childType_array = (ArrayType) childType;
-			return String.format("%s.fromIteratorOfCollections(%s)", CompositeIterator.class.getSimpleName(),
+			return String.format("%s.fromIteratorOfCollections(%s)", "CompositeIterator",
 					childType_array.getIteratorExpr(variableName));
 		}
-		return variableName + ".iterator()";
+		return variableName;
 	}
 }
