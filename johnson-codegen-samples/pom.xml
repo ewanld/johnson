@@ -27,8 +27,8 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<schema>${project.basedir}/src/main/resources/example1-database.json</schema>
-							<packageName>com.github.johnson.examples</packageName>
+							<schema>${project.basedir}/src/main/resources/database-schema.json</schema>
+							<packageName>com.github.johnson.examples.database</packageName>
 							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
 							<dtoFieldsFinal>false</dtoFieldsFinal>
 							<generateDtoVisitor>true</generateDtoVisitor>
