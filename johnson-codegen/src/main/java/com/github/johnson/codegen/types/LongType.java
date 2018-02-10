@@ -1,6 +1,6 @@
 package com.github.johnson.codegen.types;
 
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class LongType extends PrimitiveType {
 
@@ -33,11 +33,11 @@ public class LongType extends PrimitiveType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new LongParser(%s)", Boolean.toString(nullable));
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new LongParser(%s)", Boolean.toString(_nullable));
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		visitor.visitLong(this);
 	}
 }

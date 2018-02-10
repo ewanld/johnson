@@ -31,7 +31,19 @@ public abstract class JohnsonType {
 
 	public abstract String getDefaultValueExpr();
 
-	public abstract String getNewParserExpr();
+	/**
+	 * Return the Java expression to create a parser for this type. (e.g "new XXX()")
+	 */
+	public String getNewParserExpr() {
+		return getNewParserExpr(nullable);
+	}
+
+	/**
+	 * Return the Java expression to create a parser for this type. (e.g "new XXX()").
+	 * <p>
+	 * The nullability of the type is overriden by the nullability specified in argument.
+	 */
+	public abstract String getNewParserExpr(boolean _nullable);
 
 	public String getParserTypeName() {
 		return String.format("JohnsonParser<%s>", getClassName());

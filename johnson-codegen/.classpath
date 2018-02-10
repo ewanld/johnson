@@ -22,5 +22,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/visitorj-codegen"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/visitorj-runtime"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

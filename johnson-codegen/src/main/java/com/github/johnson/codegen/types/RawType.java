@@ -2,7 +2,7 @@ package com.github.johnson.codegen.types;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.johnson.RawParser;
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class RawType extends JohnsonType {
 
@@ -26,11 +26,11 @@ public class RawType extends JohnsonType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new %s(%s)", RawParser.class.getSimpleName(), Boolean.toString(nullable));
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new %s(%s)", RawParser.class.getSimpleName(), Boolean.toString(_nullable));
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		visitor.visitRaw(this);
 	}
 

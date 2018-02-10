@@ -1,7 +1,7 @@
 package com.github.johnson.codegen.types;
 
 import com.github.johnson.BooleanParser;
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class BooleanType extends PrimitiveType {
 
@@ -34,11 +34,11 @@ public class BooleanType extends PrimitiveType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new %s(%s)", BooleanParser.class.getSimpleName(), Boolean.toString(nullable));
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new %s(%s)", BooleanParser.class.getSimpleName(), Boolean.toString(_nullable));
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		visitor.visitBool(this);
 	}
 }

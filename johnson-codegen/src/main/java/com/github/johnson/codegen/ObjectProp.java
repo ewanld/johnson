@@ -1,6 +1,8 @@
 package com.github.johnson.codegen;
 
+import com.github.johnson.codegen.types.ArrayType;
 import com.github.johnson.codegen.types.JohnsonType;
+import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.util.Maybe;
 
 /**
@@ -21,6 +23,14 @@ public class ObjectProp {
 		return type;
 	}
 
+	public JohnsonType getReferencedType() {
+		if (type instanceof RefType) {
+			return ((RefType) type).getReferencedType();
+		} else {
+			return type;
+		}
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -38,7 +48,7 @@ public class ObjectProp {
 		return required;
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		if (visitor.enterObjectProp(this)) {
 			visitor.acceptAny(type);
 		}
@@ -47,5 +57,15 @@ public class ObjectProp {
 
 	public String getDefaultValueExpr() {
 		return required ? type.getDefaultValueExpr() : Maybe.class.getSimpleName() + ".empty()";
+	}
+
+	public String getVisitableExpr() {
+		final String expr = required ? getJavaName() : getJavaName() + ".get()";
+		final JohnsonType referencedType = getReferencedType();
+		if (referencedType instanceof ArrayType) {
+			return ((ArrayType) referencedType).getIteratorExpr(expr);
+		} else {
+			return expr;
+		}
 	}
 }

@@ -2,7 +2,7 @@ package com.github.johnson.codegen.types;
 
 import java.math.BigDecimal;
 
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class DecimalType extends PrimitiveType {
 
@@ -35,11 +35,11 @@ public class DecimalType extends PrimitiveType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new DecimalParser(%s)", Boolean.toString(nullable));
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new DecimalParser(%s)", Boolean.toString(_nullable));
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		visitor.visitDecimal(this);
 	}
 

@@ -21,6 +21,7 @@ import com.github.johnson.codegen.types.ObjectType;
 import com.github.johnson.codegen.types.RawType;
 import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.codegen.types.StringType;
+import com.github.johnson.codegen.visitors.ReplaceRefs;
 
 /**
  * Read a specification file (JSON) and create the associated JohnsonType's.

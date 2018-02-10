@@ -1,6 +1,6 @@
 package com.github.johnson.codegen.types;
 
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class RefType extends JohnsonType {
 	private JohnsonType referencedType;
@@ -19,8 +19,12 @@ public class RefType extends JohnsonType {
 		return refTypeName;
 	}
 
-	public void accept(TypeVisitor visitor) {
-		visitor.visitRef(this);
+	public void accept(JohnsonTypeVisitor visitor) {
+		if (visitor.enterRef(this)) {
+			visitor.visitRef(this);
+			visitor.acceptAny(referencedType);
+		}
+		visitor.exitRef(this);
 	}
 
 	@Override
@@ -39,8 +43,8 @@ public class RefType extends JohnsonType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return referencedType.getNewParserExpr();
+	public String getNewParserExpr(boolean _nullable) {
+		return referencedType.getNewParserExpr(_nullable);
 	}
 
 	public JohnsonType getReferencedType() {

@@ -1,7 +1,7 @@
 package com.github.johnson.codegen.types;
 
 import com.github.johnson.MapParser;
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class MapType extends JohnsonType {
 	private final JohnsonType childType;
@@ -27,12 +27,12 @@ public class MapType extends JohnsonType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new %s(%s, %s)", getParserTypeName(), Boolean.valueOf(nullable),
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new %s(%s, %s)", getParserTypeName(), Boolean.valueOf(_nullable),
 				childType.getNewParserExpr());
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		if (visitor.enterMap(this)) {
 			visitor.acceptAny(childType);
 		}

@@ -1,33 +1,58 @@
 package com.github.johnson.codegen;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.github.ewanld.visitor.*;
+import com.github.ewanld.visitor.codegen.JavaClass;
+import com.github.ewanld.visitor.codegen.VisitorGeneratorService;
 import com.github.johnson.JohnsonParser;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.ObjectType;
+import com.github.johnson.codegen.visitors.AssignNames;
+import com.github.johnson.codegen.visitors.ContainsObjectType;
+import com.github.johnson.codegen.visitors.ListObjectTypes;
+import com.github.johnson.codegen.visitors.ReplaceRefs;
 import com.github.johnson.util.Maybe;
 
 public class CodeGenerator {
 	private final String packageName;
 	private final String outputDir;
 	private final Map<String /* type name */, JohnsonType> namedTypes;
+	private boolean generateDtoEmptyConstructor = false;
+	private boolean generateDtoVisitor;
+	private boolean dtoFieldsFinal;
+	private String dtoVisitorName = "JsonDto";
+	private String dtoClassNameSuffix = "";
 
 	public CodeGenerator(String outputDir, String packageName, Map<String, JohnsonType> namedTypes) {
 		this.outputDir = outputDir;
 		this.packageName = packageName;
 		this.namedTypes = new HashMap<>(namedTypes);
 		new ReplaceRefs(this.namedTypes).replaceAllRefs();
+	}
+
+	public void setDtoClassNameSuffix(String dtoClassNameSuffix) {
+		this.dtoClassNameSuffix = dtoClassNameSuffix == null ? "" : dtoClassNameSuffix;
+	}
+
+	public void setGenerateDtoEmptyConstructor(boolean generateDtoEmptyConstructor) {
+		this.generateDtoEmptyConstructor = generateDtoEmptyConstructor;
+	}
+
+	public void setGenerateDtoVisitor(boolean generateDtoVisitor) {
+		this.generateDtoVisitor = generateDtoVisitor;
+	}
+
+	public void setDtoVisitorName(String dtoVisitorName) {
+		this.dtoVisitorName = dtoVisitorName;
+	}
+
+	public void setDtoFieldsFinal(boolean dtoFieldsFinal) {
+		this.dtoFieldsFinal = dtoFieldsFinal;
 	}
 
 	private void assignNames() {
@@ -44,10 +69,10 @@ public class CodeGenerator {
 	}
 
 	/**
-	 * Utility method.
+	 * Utility method. Return only the 'ObjectType' types from the specified collection of types.
 	 */
 	private static Set<ObjectType> keepObjectTypes(Collection<? extends JohnsonType> types) {
-		final Set<ObjectType> res = new HashSet<ObjectType>();
+		final Set<ObjectType> res = new HashSet<>();
 		for (final JohnsonType type : types) {
 			if (type instanceof ObjectType) {
 				res.add((ObjectType) type);
@@ -58,20 +83,32 @@ public class CodeGenerator {
 
 	public void gen() throws IOException {
 		final String dtoClassName = "JsonDto";
+		final String parsersClassName = "JsonParsers";
 
 		assignNames();
 		final Set<ObjectType> objectTypes = listObjectTypes_deep(namedTypes.values());
 		assignNamesToAnonymousObjectTypes(objectTypes);
-		final Set<JohnsonType> anonAndNamedTypes = new HashSet<JohnsonType>(namedTypes.values());
+		objectTypes.forEach(t -> t.setName(t.getName() + dtoClassNameSuffix));
+		final Set<JohnsonType> anonAndNamedTypes = new HashSet<>(namedTypes.values());
 		anonAndNamedTypes.addAll(objectTypes);
 
-		final DtoWriter dto = new DtoWriter(outputDir, packageName, dtoClassName, objectTypes);
-		final ParsersWriter parsers = new ParsersWriter(outputDir, packageName, "JsonParsers", dtoClassName,
+		final DtoWriter dto = new DtoWriter(outputDir, packageName, dtoClassName, objectTypes,
+				generateDtoEmptyConstructor, generateDtoVisitor, dtoFieldsFinal, dtoVisitorName);
+		final ParsersWriter parsers = new ParsersWriter(outputDir, packageName, parsersClassName, dtoClassName,
 				anonAndNamedTypes);
 		parsers.gen();
+		parsers.close();
+
 		dto.gen();
 		dto.close();
-		parsers.close();
+
+		if (generateDtoVisitor) {
+			// we need to keep only ObjectTypes because a named type may be an alias to a primitive type
+			final List<JavaClass> javaClasses = namedTypes.values().stream().filter(j -> j instanceof ObjectType)
+					.map(t -> new JavaClass(packageName + "." + dtoClassName + "." + t.getClassName()))
+					.collect(Collectors.toList());
+			new VisitorGeneratorService().generateAll(dtoVisitorName, new File(outputDir), javaClasses, packageName);
+		}
 	}
 
 	private static Set<ObjectType> listObjectTypes_deep(Collection<? extends JohnsonType> types) {
@@ -128,7 +165,7 @@ public class CodeGenerator {
 			// create var_* variables
 			for (final ObjectProp prop : objectType.getProperties()) {
 				writeln("			Maybe<%s> val_%s = Maybe.empty();", prop.getType().getClassName(),
-						prop.getJavaName(), prop.getDefaultValueExpr());
+						prop.getJavaName());
 			}
 			writeln();
 
@@ -137,18 +174,21 @@ public class CodeGenerator {
 			writeln("				final String fieldName = jp.getCurrentName();");
 			writeln("				jp.nextToken();");
 
-			boolean first = true;
-			for (final ObjectProp prop : objectType.getProperties()) {
-				writeln("				%sif (fieldName.equals(\"%s\")) {", first ? "" : "else ",
-						toJavaLiteral(prop.getName()));
-				writeln("					val_%s = Maybe.of(parser_%s.parse(jp));", prop.getJavaName(),
-						prop.getJavaName());
-				writeln("				}");
-				first = false;
+			if (!objectType.getProperties().isEmpty()) {
+				boolean first = true;
+				for (final ObjectProp prop : objectType.getProperties()) {
+					write("				");
+					if (!first) write("else ");
+					writeln("if (fieldName.equals(\"%s\")) {", escapeJavaString(prop.getName()));
+					writeln("					val_%s = Maybe.of(parser_%s.parse(jp));", prop.getJavaName(),
+							prop.getJavaName());
+					writeln("				}");
+					first = false;
+				}
+				writeln("				else {");
+				writeln("					throw new JsonParseException(jp, \"unknown field: \" + fieldName);");
+				writeln("				}"); // end if
 			}
-			writeln("				else {");
-			writeln("					throw new JsonParseException(jp, \"unknown field: \" + fieldName);");
-			writeln("				}"); // end if
 			writeln();
 			writeln("			}"); // end while
 
@@ -157,14 +197,14 @@ public class CodeGenerator {
 			for (final ObjectProp prop : objectType.getProperties()) {
 				if (prop.isRequired()) {
 					writeln("			if (!val_%s.isPresent()) throw new JsonParseException(jp, \"A required property is missing: %s\");",
-							prop.getJavaName(), toJavaLiteral(prop.getName()));
+							prop.getJavaName(), escapeJavaString(prop.getName()));
 				}
 			}
 			writeln();
 
 			// assign res value
 			write("			final %s res = new %s(", dtoClassName, dtoClassName);
-			first = true;
+			boolean first = true;
 			for (final ObjectProp prop : objectType.getProperties()) {
 				write("%sval_%s%s", first ? "" : ", ", prop.getJavaName(), prop.isRequired() ? ".get()" : "");
 				first = false;
@@ -181,12 +221,12 @@ public class CodeGenerator {
 			writeln("			generator.writeStartObject();");
 			for (final ObjectProp prop : objectType.getProperties()) {
 				if (prop.isRequired()) {
-					writeln("			generator.writeFieldName(\"%s\");", toJavaLiteral(prop.getName()));
+					writeln("			generator.writeFieldName(\"%s\");", escapeJavaString(prop.getName()));
 					writeln("			parser_%s.serialize(value.%s, generator);", prop.getJavaName(),
 							prop.getJavaName());
 				} else {
 					writeln("			if (value.%s.isPresent()) {", prop.getJavaName());
-					writeln("				generator.writeFieldName(\"%s\");", toJavaLiteral(prop.getName()));
+					writeln("				generator.writeFieldName(\"%s\");", escapeJavaString(prop.getName()));
 					writeln("				parser_%s.serialize(value.%s.get(), generator);", prop.getJavaName(),
 							prop.getJavaName());
 					writeln("			}");
@@ -196,10 +236,6 @@ public class CodeGenerator {
 			writeln("		}");
 
 			writeln("	}\n"); // end class
-		}
-
-		private static String toJavaLiteral(String s) {
-			return s.replace("\\", "\\\\").replace("\"", "\\\"");
 		}
 
 		private void genHeader() throws IOException {
@@ -240,18 +276,22 @@ public class CodeGenerator {
 		return res.toString();
 	}
 
-	public static String toJavaClassName(String identifier) {
-		final String res = identifier.substring(0, 1).toUpperCase() + identifier.substring(1);
-		return res;
-	}
-
 	private static class DtoWriter extends JavaWriter {
 		private final Set<ObjectType> types;
+		private final boolean generateDtoEmptyConstructor;
+		private final boolean generateDtoVisitor;
+		private final boolean dtoFieldsFinal;
+		private final String dtoVisitorName;
 
-		public DtoWriter(String outputDir, String packageName, String className, Set<ObjectType> types)
-				throws IOException {
+		public DtoWriter(String outputDir, String packageName, String className, Set<ObjectType> types,
+				boolean generateDtoEmptyConstructor, boolean generateDtoVisitor, boolean dtoFieldsFinal,
+				String dtoVisitorName) throws IOException {
 			super(outputDir, packageName, className);
 			this.types = types;
+			this.generateDtoEmptyConstructor = generateDtoEmptyConstructor;
+			this.generateDtoVisitor = generateDtoVisitor;
+			this.dtoFieldsFinal = dtoFieldsFinal;
+			this.dtoVisitorName = dtoVisitorName;
 		}
 
 		public void gen() throws IOException {
@@ -267,11 +307,15 @@ public class CodeGenerator {
 		}
 
 		private void genDtoClass(ObjectType type) throws IOException {
-			// @formatter:off
-			writeln("	public static class %s {", type.getTypeName());
+			write("	public static class %s ", type.getTypeName());
+			if (generateDtoVisitor) {
+				write("implements Visitable<%sVisitor> ", dtoVisitorName);
+			}
+			writeln("{");
+			// declare fields
 			for (final ObjectProp p : type.getProperties()) {
-				final String javaFieldName = toJavaFieldName(p.getName());
-				writeln("		public final %s %s;", p.getTypeName(), javaFieldName);
+				final String javaFieldName = p.getJavaName();
+				writeln("		public %s%s %s;", dtoFieldsFinal ? "final " : "", p.getTypeName(), javaFieldName);
 			}
 
 			// constructor
@@ -279,27 +323,100 @@ public class CodeGenerator {
 			write("		public %s(", type.getTypeName());
 			boolean first = true;
 			for (final ObjectProp p : type.getProperties()) {
-				final String javaFieldName = toJavaFieldName(p.getName());
+				final String javaFieldName = p.getJavaName();
 				write("%s%s %s", first ? "" : ", ", p.getTypeName(), javaFieldName);
 				first = false;
 			}
 			writeln(") {");
 			for (final ObjectProp p : type.getProperties()) {
-				final String javaFieldName = toJavaFieldName(p.getName());
+				final String javaFieldName = p.getJavaName();
 				writeln("			this.%s = %s;", javaFieldName, javaFieldName);
 			}
 			writeln("		}");
+
+			// empty constructor (optional)
+			if (generateDtoEmptyConstructor && !type.getProperties().isEmpty()) {
+				writeln();
+				writeln("		public %s() {", type.getTypeName());
+				for (final ObjectProp p : type.getProperties()) {
+					final String javaFieldName = p.getJavaName();
+					writeln("			this.%s = %s;", javaFieldName, p.getDefaultValueExpr());
+				}
+				writeln("		}");
+				writeln();
+			}
+
+			// visitor "event" method
+			if (generateDtoVisitor) {
+				writeln("		@Override");
+				writeln("		public void event(VisitEvent event, %sVisitor visitor) {", dtoVisitorName);
+				if (!type.isAnonymous()) {
+					writeln("			visitor.event(event, this);");
+				}
+				writeln("		}");
+				writeln();
+			}
+
+			// visitor "visit" method
+			if (generateDtoVisitor) {
+				writeln("		@Override");
+				writeln("		public final VisitResult visit(final %sVisitor visitor, String identifier) {",
+						dtoVisitorName);
+				if (type.isAnonymous()) {
+					writeln("			return VisitResult.CONTINUE;");
+				} else {
+					writeln("			return visitor.visit(this, identifier);");
+				}
+				writeln("		}");
+				writeln();
+			}
+
+			// visitor "getVisitableChildren" method
+			if (generateDtoVisitor) {
+				writeln("		@Override");
+				writeln("		public final IdentifiedVisitables<%sVisitor> getVisitableChildren() {", dtoVisitorName);
+				writeln("			final IdentifiedVisitables<%sVisitor> res = new IdentifiedVisitables<>();",
+						dtoVisitorName);
+				for (final ObjectProp p : type.getProperties()) {
+					final ContainsObjectType containsObjectType = new ContainsObjectType();
+					containsObjectType.acceptAny(p.getType());
+					if (containsObjectType.getResult()) {
+						writeln("			res.add(%s, %s);", p.getVisitableExpr(), toJavaLiteral(p.getJavaName()));
+					}
+				}
+				writeln("			return res;");
+				writeln("		}");
+				writeln();
+			}
+
 			writeln("	}\n");
-			// @formatter:on
+
 		}
 
 		private void genHeader() throws IOException {
 			writeln("package %s;\n", packageName);
+
 			writeln("import %s;", List.class.getName());
 			writeln("import %s;", Map.class.getName());
+			writeln("import %s;", ArrayList.class.getName());
 			writeln("import %s;", BigDecimal.class.getName());
 			writeln("import %s;", Maybe.class.getName());
 			writeln();
+
+			if (generateDtoVisitor) {
+				writeln("import %s;", Visitable.class.getName());
+				writeln("import %s;", IdentifiedVisitables.class.getName());
+				writeln("import %s;", VisitEvent.class.getName());
+				writeln("import %s;", VisitResult.class.getName());
+				writeln("import %s;", Arrays.class.getName());
+				writeln("import %s;", CompositeIterator.class.getName());
+				writeln("import %s;", Iterator.class.getName());
+				writeln("import %s;", ArrayList.class.getName());
+				writeln("import %s;", Collection.class.getName());
+				writeln("import %s;", Collections.class.getName());
+				writeln();
+			}
+
 			writeln("public class %s {", className);
 		}
 
@@ -340,35 +457,13 @@ public class CodeGenerator {
 		public void close() throws IOException {
 			wrapped.close();
 		}
-
 	}
 
-	public static class AssignNames extends TypeVisitor {
-		private int counter = 1;
-
-		@Override
-		public boolean enterObject(ObjectType type) {
-			if (type.getName() == null) {
-				type.setName("Anonymous" + counter);
-				type.setAnonymous(true);
-				counter++;
-			}
-			return true;
-		}
+	private static String escapeJavaString(String s) {
+		return s.replace("\\", "\\\\").replace("\"", "\\\"");
 	}
 
-	public static class ListObjectTypes extends TypeVisitor {
-		private final Set<ObjectType> result = new HashSet<>();
-
-		@Override
-		public boolean enterObject(ObjectType type) {
-			result.add(type);
-			return true;
-		}
-
-		public Set<ObjectType> getResult() {
-			return result;
-		}
-
+	private static String toJavaLiteral(String s) {
+		return "\"" + escapeJavaString(s) + "\"";
 	}
 }

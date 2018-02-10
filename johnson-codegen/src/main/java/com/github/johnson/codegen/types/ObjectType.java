@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import com.github.johnson.codegen.ObjectProp;
-import com.github.johnson.codegen.TypeVisitor;
+import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class ObjectType extends JohnsonType {
 	private final Collection<ObjectProp> properties;
@@ -47,8 +47,8 @@ public class ObjectType extends JohnsonType {
 	}
 
 	@Override
-	public String getNewParserExpr() {
-		return String.format("new %sParser(%s)", getTypeName(), Boolean.toString(nullable));
+	public String getNewParserExpr(boolean _nullable) {
+		return String.format("new %sParser(%s)", getTypeName(), Boolean.toString(_nullable));
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class ObjectType extends JohnsonType {
 		return String.format("%sParser", getTypeName());
 	}
 
-	public void accept(TypeVisitor visitor) {
+	public void accept(JohnsonTypeVisitor visitor) {
 		if (visitor.enterObject(this)) {
 			for (final ObjectProp prop : properties) {
 				prop.accept(visitor);
