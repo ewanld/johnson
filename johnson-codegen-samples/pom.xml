@@ -31,7 +31,7 @@
 							<packageName>com.github.johnson.examples.database</packageName>
 							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
 							<dtoFieldsFinal>false</dtoFieldsFinal>
-							<generateDtoVisitor>true</generateDtoVisitor>
+							<generateDtoVisitor>false</generateDtoVisitor>
 						</configuration>
 					</execution>
 				</executions>
