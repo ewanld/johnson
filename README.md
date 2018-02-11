@@ -132,3 +132,29 @@ Table table1:
   - Column id
   - Column email
 ```
+
+## Johnson schema
+A Johnson schema is valid JSON Object, where:
+* Keys represent type names ([a-zA-Z0-9_]).
+* Values represent the *type definition* .
+
+For each type, 2 classes will be generated:
+* A DTO (Data Transfer Object) class: a "dumb" container of the data.
+* A Parser class: exposes a parser method to go from a JSON input stream to a DTO; and a generator method to serialize a DTO to an output stream.  
+
+*Type definition* can be either:
+* A JSON array: to specify that the type represents an array.
+* A JSON object: to specify that the type represents a JSON object. In this object:
+** Keys are the keys expected to be found in the JSON source.
+** Values are *type definitions*.
+* A JSON string: to reference another type, or one of the built-in types:
+
+| Built-in type|Java mapping    
+| -------------|--------------------------------------------|
+| ```string``` | String |
+| ```bool```   | boolean |
+| ```int```    | int |
+| ```long```   | long |
+| ```decimal```| java.math.BigDecimal |
+| ```double``` | double |
+| ```raw```    | com.fasterxml.jackson.databind.JsonNode |
