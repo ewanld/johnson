@@ -2,7 +2,11 @@ package com.github.johnson;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -15,6 +19,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.github.johnson.codegen.CodeGenerator;
 import com.github.johnson.codegen.SpecParser;
 import com.github.johnson.codegen.types.JohnsonType;
+import com.github.visitorj.util.CompositeIterable;
 
 /**
  * This goal will say a message.
@@ -27,23 +32,26 @@ public class CodeGeneratorMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project.build.directory}/generated-sources/java", required = true)
 	private String outputDirectory;
 
+	@Parameter(property = "packageName", defaultValue = "")
+	private String packageName;
+
+	@Parameter(property = "addditionalSchemas")
+	private List<String> additionalSchemas;
+
 	@Parameter(property = "dtoClassNameSuffix", defaultValue = "")
 	private String dtoClassNameSuffix;
 
 	@Parameter(property = "dtoFieldsFinal", defaultValue = "false")
 	private boolean dtoFieldsFinal;
 
-	@Parameter(property = "dtoVisitorName", defaultValue = "JsonDto")
-	private String dtoVisitorName;
-
-	@Parameter(property = "generateDtoEmptyConstructor", defaultValue = "false")
+	@Parameter(property = "dtoGenerateEmptyConstructor", defaultValue = "false")
 	private boolean generateDtoEmptyConstructor;
 
-	@Parameter(property = "generateDtoVisitor", defaultValue = "false")
+	@Parameter(property = "dtoGenerateVisitor", defaultValue = "false")
 	private boolean generateDtoVisitor;
 
-	@Parameter(property = "packageName", defaultValue = "")
-	private String packageName;
+	@Parameter(property = "dtoVisitorName", defaultValue = "JsonDto")
+	private String dtoVisitorName;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -51,19 +59,27 @@ public class CodeGeneratorMojo extends AbstractMojo {
 		getLog().info(outputDirectory);
 		if (packageName == null) packageName = "";
 		final JsonFactory jackson = new JsonFactory();
-		try (final SpecParser specParser = new SpecParser(
-				jackson.createParser(new BufferedReader(new FileReader(schema))))) {
-			final Map<String, JohnsonType> namedTypes = specParser.read();
-			final CodeGenerator codeGenerator = new CodeGenerator(outputDirectory, packageName, namedTypes);
-			codeGenerator.setDtoClassNameSuffix(dtoClassNameSuffix);
-			codeGenerator.setDtoFieldsFinal(dtoFieldsFinal);
-			codeGenerator.setDtoVisitorName(dtoVisitorName);
-			codeGenerator.setGenerateDtoEmptyConstructor(generateDtoEmptyConstructor);
-			codeGenerator.setGenerateDtoVisitor(generateDtoVisitor);
+		final Map<String, JohnsonType> namedTypes = new TreeMap<>();
+		final Iterable<String> allSchemas = new CompositeIterable<>(Collections.singleton(schema), additionalSchemas);
+		for (final String s : allSchemas) {
+			try (final SpecParser specParser = new SpecParser(
+					jackson.createParser(new BufferedReader(new FileReader(s))))) {
+				namedTypes.putAll(specParser.read());
+			} catch (final Exception e) {
+				throw new MojoFailureException(e.getMessage(), e);
+			}
+		}
+		final CodeGenerator codeGenerator = new CodeGenerator(outputDirectory, packageName, namedTypes);
+		codeGenerator.setDtoClassNameSuffix(dtoClassNameSuffix);
+		codeGenerator.setDtoFieldsFinal(dtoFieldsFinal);
+		codeGenerator.setDtoVisitorName(dtoVisitorName);
+		codeGenerator.setGenerateDtoEmptyConstructor(generateDtoEmptyConstructor);
+		codeGenerator.setGenerateDtoVisitor(generateDtoVisitor);
 
+		try {
 			codeGenerator.gen();
-		} catch (final Exception e) {
-			throw new MojoFailureException(e.getMessage(), e);
+		} catch (final IOException e) {
+			throw new MojoExecutionException(e.getMessage(), e);
 		}
 	}
 }

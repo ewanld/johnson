@@ -6,14 +6,17 @@ import com.github.johnson.codegen.JohnsonTypeVisitor;
 import com.github.johnson.codegen.types.JohnsonType;
 import com.github.johnson.codegen.types.RefType;
 
-public class ReplaceRefs extends JohnsonTypeVisitor {
+/**
+ * Fill the "referencedType" field of {@link RefType}s.
+ */
+public class FillRefs extends JohnsonTypeVisitor {
 	private final Map<String, ? extends JohnsonType> types;
 
-	public ReplaceRefs(Map<String, ? extends JohnsonType> typeNames) {
+	public FillRefs(Map<String, ? extends JohnsonType> typeNames) {
 		this.types = typeNames;
 	}
 
-	public void replaceAllRefs() {
+	public void fillAllRefs() {
 		for (final JohnsonType type : types.values()) {
 			acceptAny(type);
 		}

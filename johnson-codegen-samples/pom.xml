@@ -31,7 +31,24 @@
 							<packageName>com.github.johnson.examples.database</packageName>
 							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
 							<dtoFieldsFinal>false</dtoFieldsFinal>
-							<generateDtoVisitor>false</generateDtoVisitor>
+							<dtoGenerateVisitor>false</dtoGenerateVisitor>
+						</configuration>
+					</execution>
+					<execution>
+						<id>example2-multiple-sources</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<schema>${project.basedir}/src/main/resources/database-schema.json</schema>
+							<additionalSchemas>
+								<schema>${project.basedir}/src/main/resources/world-schema.json</schema>
+							</additionalSchemas>
+							<packageName>com.github.johnson.examples.multiple</packageName>
+							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
+							<dtoFieldsFinal>true</dtoFieldsFinal>
+							<dtoGenerateVisitor>true</dtoGenerateVisitor>
 						</configuration>
 					</execution>
 				</executions>

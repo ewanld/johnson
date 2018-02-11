@@ -1,0 +1,18 @@
+{
+	"world": {
+		"europeanCountries": [ "europeanCountry" ],
+		"africanCountries": [ "africanCountry" ]
+	},
+	"country": {
+		"name": "string",
+		"currency?": "string"
+	},
+	"europeanCountry": {
+		"$extends": "country",
+		"euMember": "bool"
+	},
+	"africanCountry": {
+		"$extends": "country",
+		"aftzMember": "bool"
+	}
+}

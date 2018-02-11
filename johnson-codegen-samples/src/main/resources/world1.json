@@ -1,0 +1,18 @@
+{
+	"europeanCountries": [
+		{
+			"name": "France",
+			"euMember": true
+		},
+		{
+			"name": "Switzerland",
+			"euMember": false
+		}
+	 ],
+	 "africanCountries": [
+		 {
+		 	"name": "South Africa",
+		 	"aftzMember": true
+		 }
+	]
+}

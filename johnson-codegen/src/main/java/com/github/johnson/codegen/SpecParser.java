@@ -2,13 +2,9 @@ package com.github.johnson.codegen;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -24,14 +20,12 @@ import com.github.johnson.codegen.types.ObjectType;
 import com.github.johnson.codegen.types.RawType;
 import com.github.johnson.codegen.types.RefType;
 import com.github.johnson.codegen.types.StringType;
-import com.github.johnson.codegen.visitors.ReplaceRefs;
+import com.github.johnson.codegen.visitors.FillRefs;
 
 /**
  * Read a specification file (JSON) and create the associated JohnsonType's.
  */
 public class SpecParser implements Closeable {
-	private static final Pattern specDelim = Pattern.compile("\\s+");
-	private static final String KEYWORD_PREFIX = "#";
 	private final JsonParser jp;
 
 	public SpecParser(JsonParser jp) {
@@ -54,18 +48,27 @@ public class SpecParser implements Closeable {
 			res.put(name, val);
 		}
 
-		new ReplaceRefs(res).replaceAllRefs();
+		new FillRefs(res).fillAllRefs();
 		return res;
 	}
 
 	private ObjectType readObjectType() throws JsonParseException, IOException {
-		final List<ObjectProp> props = new ArrayList<>();
+		final Map<String, ObjectProp> props = new HashMap<>();
+		JohnsonType baseType = null;
 		assert jp.getCurrentToken() == JsonToken.START_OBJECT;
 		while (jp.nextToken() != JsonToken.END_OBJECT) {
 			final ObjectProp objectProp = readObjectProp();
-			props.add(objectProp);
+
+			// handle special case: "$extends" key
+			final boolean extendsProp = objectProp.getName().equals("$extends");
+			if (extendsProp) {
+				baseType = objectProp.getType();
+			} else {
+				props.put(objectProp.getName(), objectProp);
+			}
 		}
-		return new ObjectType(props);
+
+		return new ObjectType(false, props.values(), baseType);
 	}
 
 	private ObjectProp readObjectProp() throws IOException {
@@ -84,15 +87,11 @@ public class SpecParser implements Closeable {
 			jp.nextToken();
 			assert jp.getCurrentToken() == JsonToken.END_ARRAY;
 			return arrayType;
+
 		} else if (token == JsonToken.START_OBJECT) {
 			final ObjectType objectType = readObjectType();
 			return objectType;
-		} else if (token == JsonToken.VALUE_FALSE || token == JsonToken.VALUE_TRUE) {
-			return new BooleanType();
-		} else if (token == JsonToken.VALUE_NUMBER_INT) {
-			return new LongType();
-		} else if (token == JsonToken.VALUE_NUMBER_FLOAT) {
-			return new DecimalType();
+
 		} else if (token == JsonToken.VALUE_STRING) {
 			return readTypeSpec(jp.getValueAsString());
 		} else {
@@ -117,9 +116,6 @@ public class SpecParser implements Closeable {
 		} else if (typeName.equals("double")) {
 			return new DoubleType(nullable);
 		} else if (typeName.equals("raw")) {
-			return new RawType(nullable);
-		} else if (typeName.equals("ignored")) {
-			// TODO
 			return new RawType(nullable);
 		} else {
 			return new RefType(typeName, nullable);

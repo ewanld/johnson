@@ -1,26 +1,41 @@
 package com.github.johnson.codegen;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.github.johnson.JohnsonParser;
+import com.github.johnson.codegen.types.JohnsonType;
+import com.github.johnson.codegen.types.ObjectType;
+import com.github.johnson.codegen.visitors.AssignNames;
+import com.github.johnson.codegen.visitors.ContainsObjectType;
+import com.github.johnson.codegen.visitors.FillRefs;
+import com.github.johnson.codegen.visitors.ListObjectTypes;
+import com.github.johnson.util.Maybe;
 import com.github.visitorj.VisitEvent;
 import com.github.visitorj.VisitResult;
 import com.github.visitorj.Visitable;
 import com.github.visitorj.VisitableList;
 import com.github.visitorj.codegen.JavaClass;
 import com.github.visitorj.codegen.VisitorGeneratorService;
-import com.github.visitorj.util.*;
-import com.github.johnson.JohnsonParser;
-import com.github.johnson.codegen.types.JohnsonType;
-import com.github.johnson.codegen.types.ObjectType;
-import com.github.johnson.codegen.visitors.AssignNames;
-import com.github.johnson.codegen.visitors.ContainsObjectType;
-import com.github.johnson.codegen.visitors.ListObjectTypes;
-import com.github.johnson.codegen.visitors.ReplaceRefs;
-import com.github.johnson.util.Maybe;
+import com.github.visitorj.util.CompositeIterator;
 
 public class CodeGenerator {
 	private final String packageName;
@@ -36,7 +51,7 @@ public class CodeGenerator {
 		this.outputDir = outputDir;
 		this.packageName = packageName;
 		this.namedTypes = new HashMap<>(namedTypes);
-		new ReplaceRefs(this.namedTypes).replaceAllRefs();
+		new FillRefs(this.namedTypes).fillAllRefs();
 	}
 
 	public void setDtoClassNameSuffix(String dtoClassNameSuffix) {
@@ -76,7 +91,7 @@ public class CodeGenerator {
 	 * Utility method. Return only the 'ObjectType' types from the specified collection of types.
 	 */
 	private static Set<ObjectType> keepObjectTypes(Collection<? extends JohnsonType> types) {
-		final Set<ObjectType> res = new HashSet<>();
+		final Set<ObjectType> res = new TreeSet<>(Comparator.comparing(JohnsonType::getName));
 		for (final JohnsonType type : types) {
 			if (type instanceof ObjectType) {
 				res.add((ObjectType) type);
@@ -125,13 +140,13 @@ public class CodeGenerator {
 
 	private static class ParsersWriter extends JavaWriter {
 		private final String dtoClassName;
-		private final Set<? extends JohnsonType> namedTypes;
+		private final Set<JohnsonType> namedTypes = new TreeSet<>(Comparator.comparing(JohnsonType::getName));
 
 		public ParsersWriter(String outputDir, String packageName, String className, String dtoClassName,
 				Collection<? extends JohnsonType> namedTypes) throws IOException {
 			super(outputDir, packageName, className);
 			this.dtoClassName = dtoClassName;
-			this.namedTypes = new HashSet<>(namedTypes);
+			this.namedTypes.addAll(namedTypes);
 		}
 
 		public void gen() throws IOException {
@@ -143,14 +158,22 @@ public class CodeGenerator {
 			genFooter();
 		}
 
-		private void genObjectParser(ObjectType objectType) throws IOException {
-			final String dtoClassName = objectType.getTypeName();
+		private void genObjectParser(ObjectType type) throws IOException {
+			final String dtoClassName = type.getTypeName();
+			final Collection<ObjectProp> props = type.getProperties();
+			final Collection<ObjectProp> allProps = type.getAllProperties();
+
 			writeln("	public static class %sParser extends %s<%s> {", dtoClassName,
 					JohnsonParser.class.getSimpleName(), dtoClassName);
 
-			// generate private fields
-			for (final ObjectProp prop : objectType.getProperties()) {
-				writeln("		public final %s parser_%s = %s;", prop.getType().getParserTypeName(),
+			// generate parser_XXX fields
+			for (final ObjectProp prop : type.getBaseProperties()) {
+				writeln("		public static final %s parser_%s = %sParser.parser_%s;",
+						prop.getType().getParserTypeName(), prop.getJavaName(), type.getBaseType().getClassName(),
+						prop.getJavaName());
+			}
+			for (final ObjectProp prop : props) {
+				writeln("		public static final %s parser_%s = %s;", prop.getType().getParserTypeName(),
 						prop.getJavaName(), prop.getType().getNewParserExpr());
 			}
 			writeln();
@@ -167,7 +190,7 @@ public class CodeGenerator {
 			writeln("			assert jp.getCurrentToken() == JsonToken.START_OBJECT;\n");
 
 			// create var_* variables
-			for (final ObjectProp prop : objectType.getProperties()) {
+			for (final ObjectProp prop : allProps) {
 				writeln("			Maybe<%s> val_%s = Maybe.empty();", prop.getType().getClassName(),
 						prop.getJavaName());
 			}
@@ -178,9 +201,9 @@ public class CodeGenerator {
 			writeln("				final String fieldName = jp.getCurrentName();");
 			writeln("				jp.nextToken();");
 
-			if (!objectType.getProperties().isEmpty()) {
+			if (!props.isEmpty()) {
 				boolean first = true;
-				for (final ObjectProp prop : objectType.getProperties()) {
+				for (final ObjectProp prop : allProps) {
 					write("				");
 					if (!first) write("else ");
 					writeln("if (fieldName.equals(\"%s\")) {", escapeJavaString(prop.getName()));
@@ -198,7 +221,7 @@ public class CodeGenerator {
 
 			// check that all required fields are set
 			writeln();
-			for (final ObjectProp prop : objectType.getProperties()) {
+			for (final ObjectProp prop : allProps) {
 				if (prop.isRequired()) {
 					writeln("			if (!val_%s.isPresent()) throw new JsonParseException(jp, \"A required property is missing: %s\");",
 							prop.getJavaName(), escapeJavaString(prop.getName()));
@@ -209,7 +232,7 @@ public class CodeGenerator {
 			// assign res value
 			write("			final %s res = new %s(", dtoClassName, dtoClassName);
 			boolean first = true;
-			for (final ObjectProp prop : objectType.getProperties()) {
+			for (final ObjectProp prop : allProps) {
 				write("%sval_%s%s", first ? "" : ", ", prop.getJavaName(), prop.isRequired() ? ".get()" : "");
 				first = false;
 			}
@@ -221,9 +244,9 @@ public class CodeGenerator {
 			// generate method serialize
 			writeln("		@Override");
 			writeln("		public void serialize(%s value, JsonGenerator generator) throws IOException {",
-					objectType.getClassName());
+					type.getClassName());
 			writeln("			generator.writeStartObject();");
-			for (final ObjectProp prop : objectType.getProperties()) {
+			for (final ObjectProp prop : props) {
 				if (prop.isRequired()) {
 					writeln("			generator.writeFieldName(\"%s\");", escapeJavaString(prop.getName()));
 					writeln("			parser_%s.serialize(value.%s, generator);", prop.getJavaName(),
@@ -311,27 +334,32 @@ public class CodeGenerator {
 		}
 
 		private void genDtoClass(ObjectType type) throws IOException {
+			final Collection<ObjectProp> props = type.getProperties();
+			final ObjectType baseType = type.getBaseType();
+
 			write("	public static class %s ", type.getTypeName());
+			if (baseType != null) {
+				write("extends %s ", baseType.getClassName());
+			}
 			if (generateDtoVisitor) {
 				write("implements Visitable<%sVisitor> ", dtoVisitorName);
 			}
 			writeln("{");
 			// declare fields
-			for (final ObjectProp p : type.getProperties()) {
-				final String javaFieldName = p.getJavaName();
-				writeln("		public %s%s %s;", dtoFieldsFinal ? "final " : "", p.getTypeName(), javaFieldName);
+			for (final ObjectProp p : props) {
+				writeln("		public %s%s %s;", dtoFieldsFinal ? "final " : "", p.getTypeName(), p.getJavaName());
 			}
 
 			// constructor
 			writeln();
-			write("		public %s(", type.getTypeName());
-			boolean first = true;
-			for (final ObjectProp p : type.getProperties()) {
-				final String javaFieldName = p.getJavaName();
-				write("%s%s %s", first ? "" : ", ", p.getTypeName(), javaFieldName);
-				first = false;
+			final String attributes_str = type.getAllProperties().stream()
+					.map(p -> p.getTypeName() + " " + p.getJavaName()).collect(Collectors.joining(", "));
+			writeln("		public %s(%s) {", type.getTypeName(), attributes_str);
+
+			if (baseType != null) {
+				writeln("			super(%s);",
+						baseType.getProperties().stream().map(p -> p.getJavaName()).collect(Collectors.joining(", ")));
 			}
-			writeln(") {");
 			for (final ObjectProp p : type.getProperties()) {
 				final String javaFieldName = p.getJavaName();
 				writeln("			this.%s = %s;", javaFieldName, javaFieldName);
@@ -339,10 +367,10 @@ public class CodeGenerator {
 			writeln("		}");
 
 			// empty constructor (optional)
-			if (generateDtoEmptyConstructor && !type.getProperties().isEmpty()) {
+			if (generateDtoEmptyConstructor && !props.isEmpty()) {
 				writeln();
 				writeln("		public %s() {", type.getTypeName());
-				for (final ObjectProp p : type.getProperties()) {
+				for (final ObjectProp p : props) {
 					final String javaFieldName = p.getJavaName();
 					writeln("			this.%s = %s;", javaFieldName, p.getDefaultValueExpr());
 				}
@@ -381,7 +409,7 @@ public class CodeGenerator {
 				writeln("		public final VisitableList<%sVisitor> getVisitableChildren() {", dtoVisitorName);
 				writeln("			final VisitableList<%sVisitor> visitableChildren = new VisitableList<>();",
 						dtoVisitorName);
-				for (final ObjectProp p : type.getProperties()) {
+				for (final ObjectProp p : props) {
 					final ContainsObjectType containsObjectType = new ContainsObjectType();
 					containsObjectType.acceptAny(p.getType());
 					if (containsObjectType.getResult()) {

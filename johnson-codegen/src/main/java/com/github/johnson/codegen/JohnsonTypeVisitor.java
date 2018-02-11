@@ -96,6 +96,8 @@ public abstract class JohnsonTypeVisitor {
 	}
 
 	public final void acceptAny(JohnsonType type) {
+		if (type == null) return;
+
 		if (type instanceof BooleanType) {
 			((BooleanType) type).accept(this);
 		} else if (type instanceof DecimalType) {
