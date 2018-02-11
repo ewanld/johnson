@@ -357,8 +357,8 @@ public class CodeGenerator {
 			writeln("		public %s(%s) {", type.getTypeName(), attributes_str);
 
 			if (baseType != null) {
-				writeln("			super(%s);",
-						baseType.getProperties().stream().map(p -> p.getJavaName()).collect(Collectors.joining(", ")));
+				writeln("			super(%s);", baseType.getAllProperties().stream().map(p -> p.getJavaName())
+						.collect(Collectors.joining(", ")));
 			}
 			for (final ObjectProp p : type.getProperties()) {
 				final String javaFieldName = p.getJavaName();
