@@ -1,0 +1,24 @@
+{
+	"pickups": [
+		{
+			"wheelCount": 4,
+			"trunkVolume": 40,
+			"largeWheels": false
+		},
+		{
+			"wheelCount": 4,
+			"trunkVolume": 50,
+			"largeWheels": true
+		}
+	],
+	"motorbikes": [
+		{
+			"wheelCount": 2,
+			"cc": 500
+		},
+		{
+			"wheelCount": 2,
+			"cc": 1000
+		}
+	]
+}

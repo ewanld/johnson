@@ -1,0 +1,21 @@
+{
+	"catalog": {
+		"pickups": [ "pickup" ],
+		"motorbikes": [ "motorbike" ]
+	},
+	"vehicle": {
+		"wheelCount": "int"
+	},
+	"car": {
+		"$extends": "vehicle",
+		"trunkVolume": "int"
+	},
+	"pickup": {
+		"$extends": "car",
+		"largeWheels": "bool"
+	},
+	"motorbike": {
+		"$extends": "vehicle",
+		"cc": "int"
+	}
+}

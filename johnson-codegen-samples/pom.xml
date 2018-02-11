@@ -51,6 +51,20 @@
 							<dtoGenerateVisitor>true</dtoGenerateVisitor>
 						</configuration>
 					</execution>
+					<execution>
+						<id>example3-vehicles</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<schema>${project.basedir}/src/main/resources/vehicle-schema.json</schema>
+							<packageName>com.github.johnson.examples.vehicle</packageName>
+							<dtoClassNameSuffix>DTO</dtoClassNameSuffix>
+							<dtoFieldsFinal>true</dtoFieldsFinal>
+							<dtoGenerateVisitor>false</dtoGenerateVisitor>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 
