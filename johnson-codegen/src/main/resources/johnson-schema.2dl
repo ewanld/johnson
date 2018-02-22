@@ -1,4 +1,4 @@
-element: type {
+element: type abstract {
 	nullable: annotation<bool>
 	optional: annotation<bool>
 	description: annotation<string>
