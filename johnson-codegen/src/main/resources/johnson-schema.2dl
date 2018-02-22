@@ -1,12 +1,12 @@
 element: type {
-	nullable: annotation<empty>
-	optional: annotation<empty>
+	nullable: annotation<bool>
+	optional: annotation<bool>
 	description: annotation<string>
 }
 
 object: type extends(element) composite {
 	extends: annotation<string>
-	open: annotation<empty>
+	open: annotation<bool>
 	optional: modifier
 }
 
