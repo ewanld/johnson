@@ -23,12 +23,12 @@ import com.github.johnson.codegen.types.StringType;
 import com.github.johnson.codegen.visitors.FillRefs;
 
 /**
- * Read a specification file (JSON) and create the associated JohnsonType's.
+ * Read a Johnson schema file (in format JSON) and create the associated JohnsonType's.
  */
-public class SpecParser implements Closeable {
+public class JsonSchemaParser implements JohnsonSchemaParser {
 	private final JsonParser jp;
 
-	public SpecParser(JsonParser jp) {
+	public JsonSchemaParser(JsonParser jp) {
 		this.jp = jp;
 	}
 
@@ -37,7 +37,8 @@ public class SpecParser implements Closeable {
 		jp.close();
 	}
 
-	public Map<String, JohnsonType> read() throws JsonParseException, IOException {
+	@Override
+	public Map<String, JohnsonType> read() throws IOException {
 		final Map<String, JohnsonType> res = new TreeMap<>();
 		jp.nextToken();
 		assert jp.getCurrentToken() == JsonToken.START_OBJECT;

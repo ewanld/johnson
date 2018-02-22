@@ -1,23 +1,21 @@
 {
 	"name": "my database",
-	"tables": [
-	 	{
-	 		"name": "table1",
-	 		"type": "TABLE",
-	 		"columns": [ {
-	 			"name": "id",
-	 			"typeCode": 1,
-	 			"typeName": "VARCHAR2",
-	 			"nullable": false,
-	 			"size": 100
-	 		},
-	 		{
-	 			"name": "email",
-	 			"typeCode": 1,
-	 			"typeName": "VARCHAR2",
-	 			"nullable": true,
-	 			"size": 200
-	 		}]
-	 	}
-	]
+	"tables": [ {
+ 		"name": "table1",
+ 		"type": "TABLE",
+ 		"columns": [ {
+ 			"name": "id",
+ 			"typeCode": 1,
+ 			"typeName": "VARCHAR2",
+ 			"nullable": false,
+ 			"size": 100
+ 		},
+ 		{
+ 			"name": "email",
+ 			"typeCode": 1,
+ 			"typeName": "VARCHAR2",
+ 			"nullable": true,
+ 			"size": 200
+ 		} ]
+	 } ]
 }

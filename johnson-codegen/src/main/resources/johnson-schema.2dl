@@ -1,0 +1,44 @@
+element: type {
+	nullable: annotation<empty>
+	optional: annotation<empty>
+	description: annotation<string>
+}
+
+object: type extends(element) composite {
+	extends: annotation<string>
+	open: annotation<empty>
+	optional: modifier
+}
+
+array: type extends(element) minTypeParamCount(0) maxTypeParamCount(1)
+
+string: type extends(element) {
+	length: annotation<int>
+	minLength: annotation<int>
+	maxLength: annotation<int>
+}
+
+int: type extends(element) {
+	min: annotation<int>
+	max: annotation<int>
+}
+
+long: type extends(element) {
+	min: annotation<int>
+	max: annotation<int>
+}
+
+decimal: type extends(element) {
+	min: annotation<number>
+	max: annotation<number>
+}
+
+double: type extends(element) {
+	min: annotation<number>
+	max: annotation<number>
+}
+
+bool: type extends(element)
+raw: type extends(element)
+
+*: type extends(element)

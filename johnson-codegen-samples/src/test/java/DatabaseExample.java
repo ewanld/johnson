@@ -1,12 +1,8 @@
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.github.johnson.examples.database.JsonDto.ColumnDTO;
 import com.github.johnson.examples.database.JsonDto.DatabaseDTO;
 import com.github.johnson.examples.database.JsonDto.TableDTO;
-import com.github.johnson.examples.database.JsonParsers;
 import com.github.johnson.examples.database.JsonParsers.DatabaseDTOParser;
 
 /**
@@ -15,7 +11,7 @@ import com.github.johnson.examples.database.JsonParsers.DatabaseDTOParser;
  */
 public class DatabaseExample {
 	public static void main(String[] args) throws Exception {
-		final DatabaseDTOParser parser = new JsonParsers.DatabaseDTOParser(false);
+		final DatabaseDTOParser parser = new DatabaseDTOParser(false);
 		final JsonFactory jackson = new JsonFactory();
 		final ClassLoader classLoader = DatabaseExample.class.getClassLoader();
 		try (JsonParser jacksonParser = jackson.createParser(classLoader.getResourceAsStream("database1.json"))) {

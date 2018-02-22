@@ -1,8 +1,10 @@
 package com.github.johnson;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +18,13 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.github.johnson.codegen.CodeGenerator;
-import com.github.johnson.codegen.SpecParser;
+import com.github.johnson.codegen.JohnsonSchemaParser;
+import com.github.johnson.codegen.JsonSchemaParser;
+import com.github.johnson.codegen.ToodleSchemaParser;
 import com.github.johnson.codegen.types.JohnsonType;
+import com.github.toodle.ToodleReader;
 import com.github.visitorj.util.CompositeIterable;
 
 /**
@@ -58,12 +64,10 @@ public class CodeGeneratorMojo extends AbstractMojo {
 		getLog().info("Generating sources for schema " + schema);
 		getLog().info(outputDirectory);
 		if (packageName == null) packageName = "";
-		final JsonFactory jackson = new JsonFactory();
 		final Map<String, JohnsonType> namedTypes = new TreeMap<>();
 		final Iterable<String> allSchemas = new CompositeIterable<>(Collections.singleton(schema), additionalSchemas);
 		for (final String s : allSchemas) {
-			try (final SpecParser specParser = new SpecParser(
-					jackson.createParser(new BufferedReader(new FileReader(s))))) {
+			try (final JohnsonSchemaParser specParser = createJohnsonParser(s)) {
 				namedTypes.putAll(specParser.read());
 			} catch (final Exception e) {
 				throw new MojoFailureException(e.getMessage(), e);
@@ -80,6 +84,21 @@ public class CodeGeneratorMojo extends AbstractMojo {
 			codeGenerator.gen();
 		} catch (final IOException e) {
 			throw new MojoExecutionException(e.getMessage(), e);
+		}
+	}
+
+	private JohnsonSchemaParser createJohnsonParser(final String fileName)
+			throws IOException, JsonParseException, FileNotFoundException {
+		final BufferedReader reader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+
+		if (fileName.endsWith(".json")) {
+			final JsonFactory jackson = new JsonFactory();
+			return new JsonSchemaParser(jackson.createParser(reader));
+		} else {
+			//			final BufferedReader schemaReader = new BufferedReader(new InputStreamReader(
+			//					CodeGeneratorMojo.class.getResourceAsStream("johnson-schema.2dl"), "UTF-8"));
+			return new ToodleSchemaParser(new ToodleReader(reader, null));
 		}
 	}
 }
