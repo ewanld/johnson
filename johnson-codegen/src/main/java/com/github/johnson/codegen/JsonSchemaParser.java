@@ -1,8 +1,8 @@
 package com.github.johnson.codegen;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -54,7 +54,7 @@ public class JsonSchemaParser implements JohnsonSchemaParser {
 	}
 
 	private ObjectType readObjectType() throws JsonParseException, IOException {
-		final Map<String, ObjectProp> props = new HashMap<>();
+		final List<ObjectProp> props = new ArrayList<>();
 		JohnsonType baseType = null;
 		assert jp.getCurrentToken() == JsonToken.START_OBJECT;
 		while (jp.nextToken() != JsonToken.END_OBJECT) {
@@ -65,11 +65,11 @@ public class JsonSchemaParser implements JohnsonSchemaParser {
 			if (extendsProp) {
 				baseType = objectProp.getType();
 			} else {
-				props.put(objectProp.getName(), objectProp);
+				props.add(objectProp);
 			}
 		}
 
-		return new ObjectType(false, props.values(), baseType);
+		return new ObjectType(false, props, baseType);
 	}
 
 	private ObjectProp readObjectProp() throws IOException {
