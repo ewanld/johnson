@@ -145,8 +145,8 @@ For each type, 2 classes will be generated:
 *Type definition* can be either:
 * A JSON array: to specify that the type represents an array.
 * A JSON object: to specify that the type represents a JSON object. In this object:
-** Keys are the keys expected to be found in the JSON source.
-** Values are *type definitions*.
+  * Keys are the keys expected to be found in the JSON source.
+  * Values are *type definitions*.
 * A JSON string: to reference another type, or one of the built-in types:
 
 | Built-in type|Java mapping    
