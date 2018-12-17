@@ -41,5 +41,7 @@ double: type extends(element) {
 bool: type extends(element)
 raw: type extends(element)
 
+// Any type name that does not match one of the built-in ones will be interpreted as a subtype of "element".
+// This allows to mix built-in types with user-defined types.
 *: type extends(element)
 
