@@ -13,7 +13,7 @@ import com.fasterxml.jackson.core.JsonToken;
 
 public class MapParser<V, CP extends JohnsonParser<V>> extends JohnsonParser<Map<String, V>> {
 	public final CP childParser;
-	private final Map<String, V> result = new HashMap<String, V>();
+	private final Map<String, V> result = new HashMap<>();
 	private BiConsumer<String, V> callback = (key, value) -> result.put(key, value);
 
 	public MapParser(boolean nullable, CP childParser) {
@@ -44,7 +44,7 @@ public class MapParser<V, CP extends JohnsonParser<V>> extends JohnsonParser<Map
 	}
 
 	@Override
-	public void serialize(Map<String, V> value, JsonGenerator generator) throws IOException {
+	public void doSerialize(Map<String, V> value, JsonGenerator generator) throws IOException {
 		generator.writeStartObject();
 		for (final Entry<String, V> e : value.entrySet()) {
 			generator.writeFieldName(e.getKey());

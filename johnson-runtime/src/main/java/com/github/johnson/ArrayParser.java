@@ -24,17 +24,17 @@ public class ArrayParser<T, CP extends JohnsonParser<T>> extends JohnsonParser<L
 		super(nullable);
 		this.childParser = childParser;
 	}
-	
+
 	@Override
 	protected List<T> doParse(JsonParser jp) throws JsonParseException, IOException {
-		result = new ArrayList<T>();
+		result = new ArrayList<>();
 		while (jp.nextToken() != JsonToken.END_ARRAY) {
 			final T entity = childParser.doParse(jp);
 			callback.accept(entity);
 		}
 		return Collections.unmodifiableList(result);
 	}
-	
+
 	public Consumer<T> getCallback() {
 		return callback;
 	}
@@ -45,7 +45,7 @@ public class ArrayParser<T, CP extends JohnsonParser<T>> extends JohnsonParser<L
 	}
 
 	@Override
-	public void serialize(List<T> value, JsonGenerator generator) throws IOException {
+	public void doSerialize(List<T> value, JsonGenerator generator) throws IOException {
 		generator.writeStartArray();
 		for (final T t : value) {
 			childParser.serialize(t, generator);

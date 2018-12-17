@@ -8,7 +8,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class RawParser extends JohnsonParser<JsonNode>{
+public class RawParser extends JohnsonParser<JsonNode> {
+	public static final RawParser INSTANCE = new RawParser(false);
+	public static final RawParser INSTANCE_NULLABLE = new RawParser(true);
+
 	private final ObjectMapper mapper = new ObjectMapper();
 
 	public RawParser(boolean nullable) {
@@ -22,7 +25,7 @@ public class RawParser extends JohnsonParser<JsonNode>{
 	}
 
 	@Override
-	public void serialize(JsonNode value, JsonGenerator generator) throws IOException {
+	public void doSerialize(JsonNode value, JsonGenerator generator) throws IOException {
 		mapper.writeTree(generator, value);
 	}
 

@@ -8,6 +8,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 public class StringParser extends JohnsonParser<String> {
+	public static final StringParser INSTANCE = new StringParser(false);
+	public static final StringParser INSTANCE_NULLABLE = new StringParser(true);
+
 	public StringParser(boolean nullable) {
 		super(nullable);
 	}
@@ -15,7 +18,8 @@ public class StringParser extends JohnsonParser<String> {
 	@Override
 	public String doParse(JsonParser jp) throws JsonParseException, IOException {
 		if (jp.getCurrentToken() == JsonToken.VALUE_NULL) {
-			if (nullable) return null;
+			if (nullable)
+				return null;
 			else throw new JsonParseException(jp, "null not allowed!");
 		}
 		final String res = jp.getValueAsString();
@@ -23,7 +27,7 @@ public class StringParser extends JohnsonParser<String> {
 	}
 
 	@Override
-	public void serialize(String value, JsonGenerator generator) throws IOException {
+	public void doSerialize(String value, JsonGenerator generator) throws IOException {
 		generator.writeString(value);
 	}
 }

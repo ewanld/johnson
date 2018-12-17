@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 public class IntParser extends JohnsonParser<Integer> {
+	public static final IntParser INSTANCE = new IntParser(false);
+	public static final IntParser INSTANCE_NULLABLE = new IntParser(true);
 
 	public IntParser(boolean nullable) {
 		super(nullable);
@@ -25,7 +27,7 @@ public class IntParser extends JohnsonParser<Integer> {
 	}
 
 	@Override
-	public void serialize(Integer value, JsonGenerator generator) throws IOException {
+	public void doSerialize(Integer value, JsonGenerator generator) throws IOException {
 		generator.writeNumber(value);
 	}
 

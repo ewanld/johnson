@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 public class DoubleParser extends JohnsonParser<Double> {
+	public static final DoubleParser INSTANCE = new DoubleParser(false);
+	public static final DoubleParser INSTANCE_NULLABLE = new DoubleParser(true);
 
 	public DoubleParser(boolean nullable) {
 		super(nullable);
@@ -25,7 +27,7 @@ public class DoubleParser extends JohnsonParser<Double> {
 	}
 
 	@Override
-	public void serialize(Double value, JsonGenerator generator) throws IOException {
+	public void doSerialize(Double value, JsonGenerator generator) throws IOException {
 		generator.writeNumber(value);
 	}
 
