@@ -20,7 +20,7 @@ import com.github.johnson.codegen.types.StringType;
 import com.github.johnson.codegen.types.ArrayType;
 import com.github.johnson.codegen.types.ObjectType;
 import com.github.toodle.ToodleReader;
-import com.github.toodle.model.Definition;
+import com.github.toodle.model.TypeDefinition;
 import com.github.toodle.model.Type;
 
 /**
@@ -35,10 +35,10 @@ public class ToodleSchemaParser implements JohnsonSchemaParser {
 
 	@Override
 	public Map<String, JohnsonType> read() throws JsonParseException, IOException {
-		final Collection<Definition> definitions = reader.read();
+		final Collection<TypeDefinition> definitions = reader.read().getSubDefinitions();
 		final Map<String, JohnsonType> res = new HashMap<>();
 
-		for (final Definition definition : definitions) {
+		for (final TypeDefinition definition : definitions) {
 			res.put(definition.getName(), readDefinition(definition.getType()));
 		}
 		return res;
@@ -66,7 +66,7 @@ public class ToodleSchemaParser implements JohnsonSchemaParser {
 		} else if (typeName.equals("object")) {
 			final JohnsonType baseType = type.getAnnotation("extends") == null ? null
 					: new RefType(type.getAnnotation("extends").getStringParams().get(0), false);
-			final List<ObjectProp> children = type.getChildren().stream().map(d -> new ObjectProp(d.getName(),
+			final List<ObjectProp> children = type.getSubDefinitions().stream().map(d -> new ObjectProp(d.getName(),
 					readDefinition(d.getType()), !d.getModifiers().contains("optional"))).collect(Collectors.toList());
 			return new ObjectType(nullable, children, baseType);
 		} else {
