@@ -96,8 +96,6 @@ public class CodeGeneratorMojo extends AbstractMojo {
 			final JsonFactory jackson = new JsonFactory();
 			return new JsonSchemaParser(jackson.createParser(reader));
 		} else {
-			//			final BufferedReader schemaReader = new BufferedReader(new InputStreamReader(
-			//					CodeGeneratorMojo.class.getResourceAsStream("johnson-schema.2dl"), "UTF-8"));
 			return new ToodleSchemaParser(new ToodleReader(reader, null));
 		}
 	}
