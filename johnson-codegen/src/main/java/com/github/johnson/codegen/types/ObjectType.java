@@ -61,7 +61,7 @@ public class ObjectType extends JohnsonType {
 
 	@Override
 	public String getNewParserExpr(boolean _nullable) {
-		return String.format("new %sParser(%s)", getTypeName(), Boolean.toString(_nullable));
+		return String.format("%sParser.INSTANCE%s", getTypeName(), _nullable ? "_NULLABLE" : "");
 	}
 
 	@Override

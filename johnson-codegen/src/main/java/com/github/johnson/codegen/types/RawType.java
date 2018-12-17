@@ -27,7 +27,7 @@ public class RawType extends JohnsonType {
 
 	@Override
 	public String getNewParserExpr(boolean _nullable) {
-		return String.format("new %s(%s)", RawParser.class.getSimpleName(), Boolean.toString(_nullable));
+		return String.format("%s.INSTANCE%s", RawParser.class.getSimpleName(), _nullable ? "_NULLABLE" : "");
 	}
 
 	public void accept(JohnsonTypeVisitor visitor) {

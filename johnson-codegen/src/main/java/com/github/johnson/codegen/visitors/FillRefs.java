@@ -23,9 +23,10 @@ public class FillRefs extends JohnsonTypeVisitor {
 	}
 
 	@Override
-	public void visitRef(RefType ref) {
+	public boolean enterRef(RefType ref) {
 		final JohnsonType refType = types.get(ref.getRefTypeName());
 		if (refType == null) throw new RuntimeException("missing type: " + ref.getRefTypeName());
 		ref.setRefType(refType);
+		return false;
 	}
 }

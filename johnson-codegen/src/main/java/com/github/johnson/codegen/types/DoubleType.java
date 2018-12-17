@@ -1,5 +1,6 @@
 package com.github.johnson.codegen.types;
 
+import com.github.johnson.DoubleParser;
 import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class DoubleType extends PrimitiveType {
@@ -34,7 +35,7 @@ public class DoubleType extends PrimitiveType {
 
 	@Override
 	public String getNewParserExpr(boolean _nullable) {
-		return String.format("new DoubleParser(%s)", Boolean.toString(_nullable));
+		return String.format("%s.INSTANCE%s", DoubleParser.class.getSimpleName(), _nullable ? "_NULLABLE" : "");
 	}
 
 	public void accept(JohnsonTypeVisitor visitor) {

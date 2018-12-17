@@ -35,7 +35,7 @@ public class BooleanType extends PrimitiveType {
 
 	@Override
 	public String getNewParserExpr(boolean _nullable) {
-		return String.format("new %s(%s)", BooleanParser.class.getSimpleName(), Boolean.toString(_nullable));
+		return String.format("%s.INSTANCE%s", BooleanParser.class.getSimpleName(), _nullable ? "_NULLABLE" : "");
 	}
 
 	public void accept(JohnsonTypeVisitor visitor) {

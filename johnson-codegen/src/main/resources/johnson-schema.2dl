@@ -4,9 +4,9 @@ element: type abstract {
 	description: annotation<string>
 }
 
-object: type extends(element) composite {
+object: type extends(element) composite(element) {
 	extends: annotation<string>
-	open: annotation<bool>
+	open: annotation<bool> default(true)
 	optional: modifier
 }
 
@@ -42,3 +42,4 @@ bool: type extends(element)
 raw: type extends(element)
 
 *: type extends(element)
+

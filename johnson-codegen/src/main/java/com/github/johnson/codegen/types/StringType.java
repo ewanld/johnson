@@ -1,5 +1,6 @@
 package com.github.johnson.codegen.types;
 
+import com.github.johnson.StringParser;
 import com.github.johnson.codegen.JohnsonTypeVisitor;
 
 public class StringType extends PrimitiveType {
@@ -34,7 +35,7 @@ public class StringType extends PrimitiveType {
 
 	@Override
 	public String getNewParserExpr(boolean _nullable) {
-		return String.format("new StringParser(%s)", Boolean.toString(_nullable));
+		return String.format("%s.INSTANCE%s", StringParser.class.getSimpleName(), _nullable ? "_NULLABLE" : "");
 	}
 
 	public void accept(JohnsonTypeVisitor visitor) {

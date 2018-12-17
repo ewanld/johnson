@@ -165,16 +165,15 @@ public class CodeGenerator {
 
 			writeln("	public static class %sParser extends %s<%s> {", dtoClassName,
 					JohnsonParser.class.getSimpleName(), dtoClassName);
+			// generate INSTANCE and INSTANCE_NULLABLE fields
+			writeln("		public static final %sParser INSTANCE = new %sParser(false);", dtoClassName, dtoClassName);
+			writeln("		public static final %sParser INSTANCE_NULLABLE = new %sParser(true);", dtoClassName,
+					dtoClassName);
+			writeln();
 
 			// generate parser_XXX fields
-			for (final ObjectProp prop : type.getBaseProperties()) {
-				writeln("		public static final %s parser_%s = %sParser.parser_%s;",
-						prop.getType().getParserTypeName(), prop.getJavaName(), type.getBaseType().getClassName(),
-						prop.getJavaName());
-			}
-			for (final ObjectProp prop : props) {
-				writeln("		public static final %s parser_%s = %s;", prop.getType().getParserTypeName(),
-						prop.getJavaName(), prop.getType().getNewParserExpr());
+			for (final ObjectProp prop : allProps) {
+				writeln("		private %s parser_%s;", prop.getType().getParserTypeName(), prop.getJavaName());
 			}
 			writeln();
 
@@ -187,7 +186,7 @@ public class CodeGenerator {
 			writeln("		@Override");
 			writeln("		protected %s doParse(JsonParser jp) throws JsonParseException, IOException {",
 					dtoClassName);
-			writeln("			assert jp.getCurrentToken() == JsonToken.START_OBJECT;\n");
+			writeln("			if (jp.getCurrentToken() != JsonToken.START_OBJECT) throw new JsonParseException(jp, \"Was expecting '{', got: \" + jp.getCurrentToken());\n");
 
 			// create var_* variables
 			for (final ObjectProp prop : allProps) {
@@ -197,7 +196,7 @@ public class CodeGenerator {
 			writeln();
 
 			writeln("			while (jp.nextToken() != JsonToken.END_OBJECT) {");
-			writeln("				assert jp.getCurrentToken() == JsonToken.FIELD_NAME;");
+			writeln("				if (jp.getCurrentToken() != JsonToken.FIELD_NAME) throw new JsonParseException(jp, \"Was expecting a field name, got: \" + jp.getCurrentToken());\n");
 			writeln("				final String fieldName = jp.getCurrentName();");
 			writeln("				jp.nextToken();");
 
@@ -207,7 +206,7 @@ public class CodeGenerator {
 					write("				");
 					if (!first) write("else ");
 					writeln("if (fieldName.equals(\"%s\")) {", escapeJavaString(prop.getName()));
-					writeln("					val_%s = Maybe.of(parser_%s.parse(jp));", prop.getJavaName(),
+					writeln("					val_%s = Maybe.of(getParser_%s().parse(jp));", prop.getJavaName(),
 							prop.getJavaName());
 					writeln("				}");
 					first = false;
@@ -239,28 +238,41 @@ public class CodeGenerator {
 			writeln(");");
 
 			writeln("			return res;");
-			writeln("		}"); // end method parse
+			writeln("		}"); // end method doParse
 
-			// generate method serialize
+			// generate method doSerialize
 			writeln("		@Override");
-			writeln("		public void serialize(%s value, JsonGenerator generator) throws IOException {",
+			writeln("		public void doSerialize(%s value, JsonGenerator generator) throws IOException {",
 					type.getClassName());
 			writeln("			generator.writeStartObject();");
 			for (final ObjectProp prop : props) {
 				if (prop.isRequired()) {
 					writeln("			generator.writeFieldName(\"%s\");", escapeJavaString(prop.getName()));
-					writeln("			parser_%s.serialize(value.%s, generator);", prop.getJavaName(),
+					writeln("			getParser_%s().serialize(value.%s, generator);", prop.getJavaName(),
 							prop.getJavaName());
 				} else {
 					writeln("			if (value.%s.isPresent()) {", prop.getJavaName());
 					writeln("				generator.writeFieldName(\"%s\");", escapeJavaString(prop.getName()));
-					writeln("				parser_%s.serialize(value.%s.get(), generator);", prop.getJavaName(),
+					writeln("				getParser_%s().serialize(value.%s.get(), generator);", prop.getJavaName(),
 							prop.getJavaName());
 					writeln("			}");
 				}
 			}
 			writeln("			generator.writeEndObject();");
 			writeln("		}");
+
+			// generate getParser_XXX methods
+			for (final ObjectProp prop : allProps) {
+				// parsers are lazily initialized to avoid infinite recursion (when a type references itself).
+				writeln("		public final %s getParser_%s() {", prop.getType().getParserTypeName(),
+						prop.getJavaName());
+				writeln("			if (parser_%s == null) {", prop.getJavaName());
+				writeln("				parser_%s = %s;", prop.getJavaName(), prop.getType().getNewParserExpr());
+				writeln("			}");
+				writeln("			return parser_%s;", prop.getJavaName());
+				writeln("		}");
+			}
+			writeln();
 
 			writeln("	}\n"); // end class
 		}

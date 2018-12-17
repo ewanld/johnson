@@ -2,6 +2,7 @@ package com.github.johnson.codegen.visitors;
 
 import com.github.johnson.codegen.JohnsonTypeVisitor;
 import com.github.johnson.codegen.types.ObjectType;
+import com.github.johnson.codegen.types.RefType;
 
 public class AssignNames extends JohnsonTypeVisitor {
 	private int counter = 1;
@@ -14,5 +15,10 @@ public class AssignNames extends JohnsonTypeVisitor {
 			counter++;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean enterRef(RefType type) {
+		return false;
 	}
 }
